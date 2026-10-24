@@ -3,6 +3,8 @@ Discrete math lab work 1
 Relation theory
 """
 
+import math
+
 # def reading(path: str) -> list[list]:
 #     '''відкриває і читає файл'''
 #     pass
@@ -104,14 +106,36 @@ def if_transitive(matrix: list[list[int]]) -> bool:
     return True
 
 
-def calculate_num_tras(n: int) -> int | None:
+def stirling2(n:int, k: int) -> int:
+    """
+    Computes the Stirling number of the second kind S(n, k).
+
+    :param n: int, A diffrence between сardinality of set and inner sum counter 
+    :param k: int, A diffrence beteem outer sum counter and inner sum counter
+    :return: int, The Stirling number of the second kind
+    """
+
+    if k < 0 or k > n:
+        return 0
+
+    if k == 0:
+        return 1 if n == 0 else 0
+
+    stirling_sum = 0
+    for j in range(k + 1):
+        stirling_sum += (-1)**(k - j) * math.comb(k, j) * (j**n)
+
+    return stirling_sum // math.factorial(k)
+
+
+def calculate_num_tras(n: int) -> int:
     '''
     Returns the number of transitive binary relations on a set of n elements.
     n is no bigger than 6
     Sequence values correspond to OEIS A006905.
 
     :param n: int, A number of element in set matrix 
-    :return: int or None, A number of transitive binary relations.
+    :return: int, A number of transitive binary relations.
     If n is bigger than 6, then None
 
     >>> calculate_num_tras(3)
@@ -119,25 +143,20 @@ def calculate_num_tras(n: int) -> int | None:
     >>> calculate_num_tras(7)
     '''
 
-    match n:
-        case 0:
-            result = 1
-        case 1:
-            result = 2
-        case 2:
-            result = 13
-        case 3:
-            result = 171
-        case 4:
-            result = 3994
-        case 5:
-            result = 154303
-        case 6:
-            result = 9415189
-        case _:
-            result =  None
+    if 0 > n or n > 6:
+        return None
 
-    return result
+    p = [1, 1, 3, 19, 219, 4231, 130023]
+
+    total = 0
+    for k in range(n + 1):
+        inner_sum = 0
+        for s in range(k + 1):
+            inner_sum += math.comb(n, s) * stirling2(n - s, k - s)
+
+        total += inner_sum * p[k]
+
+    return total
 
 
 if __name__ == "__main__":
@@ -155,5 +174,5 @@ if __name__ == "__main__":
     # #Showcase for dividing into classes
     # class_eqv(matrix)
 
-    # #Showcase for calculating number of transitive connections
-    # calculate_num_tras(6)
+    #Showcase for calculating number of transitive connections
+    calculate_num_tras(6)
