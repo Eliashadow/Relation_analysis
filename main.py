@@ -4,22 +4,48 @@ Relation theory
 """
 
 import math
+import itertools
 
-# def reading(path: str) -> list[list]:
-#     '''відкриває і читає файл'''
-#     pass
+def reading(path: str) -> list[list]:
+    '''відкриває і читає файл'''
 
-# def writing_in_file(path):
-#     '''записує відношення у файл'''
-#     pass
+    with open(path, 'r', encoding='utf-8') as file:
+        return[[int(x) for x in line.strip()] for line in file]
 
-# def reflexive_matrix(matrix: list[list]) -> list[list]:
-#     '''знаходить рефлексивне замикання'''
-#     pass
 
-# def symmetric_matrix(matrix:  list[list]) -> list[list]:
-#     '''знаходить рефлексивне замикання'''
-#     pass
+def writing_in_file(path: str, matrix: list[list]) -> None:
+    '''записує матрицю у файл'''
+
+    n = len(matrix)
+
+    with open(path, 'w', encoding='utf-8') as file:
+        for row in range(n):
+            line = ''.join(map(str,matrix[row]))
+            file.write(line + '\n')
+
+
+def reflexive_matrix(matrix: list[list]) -> list[list]:
+    '''знаходить рефлексивне замикання'''
+
+    n = len(matrix)
+
+    for row in range(n):
+        for col in range(n):
+            if row == col:
+                matrix[row][col] = 1
+    return matrix
+
+
+def symmetric_matrix(matrix: list[list]) -> list[list]:
+    '''знаходить симетричне замикання'''
+
+    n = len(matrix)
+
+    for row in range(n):
+        for col in range(n):
+            if matrix[row][col] == 1:
+                matrix[col][row] = 1
+    return matrix
 
 
 def transition_matrix(matrix: list[list[int]]) -> list[list[int]]:
@@ -61,19 +87,18 @@ def class_eqv(matrix: list[list[int]]) -> list[list[int]]:
     """
 
     # Making relation of equivalance by 'str'
-    # matrix_eqv = [row[:] for row in matrix]
-    # matrix_eqv = symmetric_matrix(matrix_eqv)
-    # matrix_eqv = transition_matrix(matrix_eqv)
-    # matrix_eqv = reflexive_matrix(matrix_eqv)
+    matrix_s = symmetric_matrix(matrix)
+    matrix_st = transition_matrix(matrix_s)
+    matrix_str = reflexive_matrix(matrix_st)
 
     n = len(matrix)
     quotient_set = []
-    # set is like list but more math-like(unorderded, without repetiton)
+
     visited = set()
 
     for i in range(n):
         if i not in visited:
-            eq_class = [j for j in range(n) if matrix[i][j] == 1]
+            eq_class = [j for j in range(n) if matrix_str[i][j] == 1]
             quotient_set.append(eq_class)
             visited.update(eq_class)
 
@@ -128,8 +153,9 @@ def stirling2(n:int, k: int) -> int:
     return stirling_sum // math.factorial(k)
 
 
-def calculate_num_tras(n: int) -> int:
+def calculate_num_tras_formula(n: int) -> int:
     '''
+    Better way
     Returns the number of transitive binary relations on a set of n elements.
     n is no bigger than 6
     Sequence values correspond to OEIS A006905.
@@ -138,9 +164,11 @@ def calculate_num_tras(n: int) -> int:
     :return: int, A number of transitive binary relations.
     If n is bigger than 6, then None
 
-    >>> calculate_num_tras(3)
+    >>> calculate_num_tras_formula(3)
     171
-    >>> calculate_num_tras(7)
+    >>> calculate_num_tras_formula(6)
+    9415189
+    >>> calculate_num_tras_formula(7)
     '''
 
     if 0 > n or n > 6:
@@ -159,20 +187,74 @@ def calculate_num_tras(n: int) -> int:
     return total
 
 
+def generate_matrix_combinations(n: int) -> list[list[list[int]]]:
+    '''
+    Support function for calculate_num_tras
+    Returns all possible matrixes of set with n elements
+    :param n: int, A number of element in a set
+    :return: list[list[list[int]], A list with matrixes represented by lists
+
+    >>> len(generate_matrix_combinations(2))
+    16
+    '''
+    return [[list(prod[i * n:(i + 1) * n]) for i in range(n)]
+        for prod in itertools.product([0, 1], repeat=n * n)]
+
+
+def calculate_num_tras(n: int) -> int:
+    '''
+    Returns the number of transitive binary relations on a set of n elements.
+    n is no bigger than 6.
+
+    :param n: int, A number of element in set  
+    :return: int, A number of transitive binary relations.
+    If n is bigger than 6, then None
+
+    >>> calculate_num_tras(3)
+    171
+    >>> calculate_num_tras(7)
+    '''
+
+    if 0 > n or n > 6:
+        return None
+
+    combinations = generate_matrix_combinations(n)
+
+    num_tras = 0
+    for combination in combinations:
+        if if_transitive(combination):
+            num_tras += 1
+
+    return num_tras
+
+
 if __name__ == "__main__":
     import doctest
     print(doctest.testmod())
 
+    print('==== Writing matrix ====')
+    example = [[1, 1, 0, 1, 1], [1, 1, 1, 0, 1], [1, 0, 0, 1, 0], [0, 0, 0, 1, 1], [1, 1, 1, 1, 0]]
+    writing_in_file('example.csv', example)
 
-    # # Showcase for transitive closure
-    # matrix_t = transition_matrix(matrix)
-    # print(matrix_t)
+    print('==== Reading matrix from example ====')
+    example = reading('example.csv')
+    print(example)
 
-    # # Showcase for checking if transitive
-    # if_transitive(matrix_t)
+    print('==== Making reflexive closure for matrix ====')
+    print(reflexive_matrix(example))
 
-    # #Showcase for dividing into classes
-    # class_eqv(matrix)
+    print('==== Making symmetric closure for matrix ====')
+    print(symmetric_matrix(example))
 
-    #Showcase for calculating number of transitive connections
-    calculate_num_tras(6)
+    print('==== Making transitive closure for matrix ====')
+    print(transition_matrix(example))
+
+    print('==== Checking if matrix transitive ====')
+    print(if_transitive(example))
+
+    print('==== Dividing matrix into eqv classes ====')
+    print(class_eqv(example))
+
+    print('==== Calculating number of transitive connections ====')
+    print(calculate_num_tras_formula(6))
+
