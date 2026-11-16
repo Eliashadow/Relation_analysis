@@ -5,6 +5,7 @@ Relation theory
 
 import math
 import itertools
+from logger import Timer, LogLevel, Logger
 
 def reading(path: str) -> list[list]:
     '''відкриває і читає файл'''
@@ -219,11 +220,12 @@ def calculate_num_tras(n: int) -> int:
         return None
 
     combinations = generate_matrix_combinations(n)
-
-    num_tras = 0
-    for combination in combinations:
-        if if_transitive(combination):
-            num_tras += 1
+    with Logger(min_level=LogLevel.DEBUG_P, colors=True, frame=60, version='test_advance', save=True) as log:
+        with Timer(log, f"Calculating for {n} x {n} transitive"):
+            num_tras = 0
+            for combination in combinations:
+                if if_transitive(combination):
+                    num_tras += 1
 
     return num_tras
 
@@ -257,4 +259,3 @@ if __name__ == "__main__":
 
     print('==== Calculating number of transitive connections ====')
     print(calculate_num_tras_formula(6))
-
